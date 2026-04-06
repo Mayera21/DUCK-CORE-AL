@@ -42,5 +42,7 @@ DuckCore AI is a full-stack web application that helps users understand, debug, 
 - MongoDB
 
 ---
+### 🖥️ Main Interface
+![Main](screenshots/home.png)
 
 ## 📂 📁 Project Structure
