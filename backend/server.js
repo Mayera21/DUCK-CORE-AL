@@ -1,11 +1,17 @@
 // server.js
 
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import connectDB from "./db.js";
 
-dotenv.config();
+// Validate Environment Variables
+if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY.includes("YOUR_API_KEY")) {
+  console.error("❌ CRITICAL: OPENROUTER_API_KEY is not set or using placeholder.");
+  console.error("   → Please check your .env file and ensure it starts with 'sk-or-v1-'.");
+} else {
+  console.log("✅ OpenRouter API Key detected:", `${process.env.OPENROUTER_API_KEY.substring(0, 10)}...`);
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -43,13 +49,22 @@ const generateResponse = async (type, code, language) => {
       {
         headers: {
           "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "HTTP-Referer": "http://localhost:3000", // Recommended by OpenRouter
+          "X-Title": "DuckCore AI" // Recommended by OpenRouter
         }
       }
     );
     return response.data.choices[0].message.content;
   } catch (error) {
-    console.error("OpenRouter API Error:", error.response?.data || error.message);
+    const errorData = error.response?.data;
+    const statusCode = error.response?.status || (error.message.includes("401") ? 401 : null);
+    console.error("OpenRouter API Error Details:", JSON.stringify(errorData, null, 2) || error.message);
+    
+    if (statusCode === 401) {
+      return "Error: 401 Unauthorized. Your OpenRouter API key is invalid or revoked. Please verify it at openrouter.ai/keys.";
+    }
+    
     return `Error: Failed to fetch response from AI provider. ${error.message}`;
   }
 };
